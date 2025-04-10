@@ -1,0 +1,52 @@
+site_name: member-utils
+repo_url: https://github.com/huetc/member-utils
+site_url: https://huetc.github.io/member-utils
+site_description: This is a template repository for Python projects that use uv for their dependency management.
+site_author: Christophe Huet
+edit_uri: edit/main/docs/
+repo_name: huetc/member-utils
+copyright: Maintained by <a href="https://huetc.com">huetc</a>.
+
+nav:
+  - Home: index.md
+  - Modules: modules.md
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: ["member_utils"]
+theme:
+  name: material
+  feature:
+    tabs: true
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: white
+      accent: deep orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: deep orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/huetc/member-utils
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/member-utils
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
