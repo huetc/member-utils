@@ -9,7 +9,7 @@ from googleapiclient.discovery import build
 def build_gsheet_service(creds: Credentials | ExternalCredentials):
     """Build the service to GSheets.
 
-    :param creds: the path to the credential file
+    :param creds: the credentials to access Google API
     """
     return build(
         "sheets",

@@ -1,71 +1,58 @@
-from datetime import date
-
 import pandas as pd
 from googleapiclient.discovery import build
 
+from member_utils.config import JobConfig
 from member_utils.google_auth import generate_creds
 from member_utils.gsheet_loader import load_df
-
-CREDS_PATH = "credentials.json"
-TOKEN_PATH = "token.json"  # noqa:S105
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets.readonly",
 ]
 
-GSHEET_ID = "REPLACE_BY_GSHEET_ID"
-TAB_NAME = "REPLACE_BY_GSHEET_TAB"
-COLUMN_MAPPING = {
-    "A": "email",
-    "B": "nom",
-    "C": "prenom",
-    "D": "date_fin_adhesion",
-}
-
-START_DATE = date(2026, 4, 8)
-END_DATE = date(2026, 5, 8)
-FILTER_DATE_KEY = "date_fin_adhesion"
-KEEP_EMAILS = None
-
-LOCAL_CSV_PATH = "local.csv"
 
 DATE_FORMAT = "%d/%m/%Y"
 
 if __name__ == "__main__":
-    if LOCAL_CSV_PATH:
-        member_df = pd.read_csv(LOCAL_CSV_PATH)
+    config = JobConfig()
+
+    if config.local_csv_path:
+        member_df = pd.read_csv(config.local_csv_path)
     else:
-        creds = generate_creds(creds_path=CREDS_PATH, token_path=TOKEN_PATH, scopes=SCOPES)
+        creds = generate_creds(
+            creds_path=config.google_auth_creds_path, token_path=config.google_auth_token_path, scopes=SCOPES
+        )
 
         service = build("sheets", "v4", credentials=creds)
 
         member_df = load_df(
             gsheet_service=service,
-            gsheet_id=GSHEET_ID,
-            column_mapping=COLUMN_MAPPING,
-            sheet_name=TAB_NAME,
+            gsheet_id=config.gsheet_id,
+            column_mapping=config.gsheet_column_mapping,
+            sheet_name=config.gsheet_tab_name,
         )
 
-    member_df[FILTER_DATE_KEY] = pd.to_datetime(member_df[FILTER_DATE_KEY], format=DATE_FORMAT)
+    member_df[config.filter_date_key] = pd.to_datetime(member_df[config.filter_date_key], format=DATE_FORMAT)
 
-    latest_membership_date_col = f"last_{FILTER_DATE_KEY}"
-    export_membership_date_col = f"export_{FILTER_DATE_KEY}"
+    latest_membership_date_col = f"last_{config.filter_date_key}"
+    export_membership_date_col = f"export_{config.filter_date_key}"
 
     # Retrieving its most recent annual membership for each (first name, name)
-    member_df[latest_membership_date_col] = member_df.groupby(["prenom", "nom"])[FILTER_DATE_KEY].transform("max")
+    member_df[latest_membership_date_col] = member_df.groupby(["prenom", "nom"])[config.filter_date_key].transform(
+        "max"
+    )
 
-    member_df[export_membership_date_col] = member_df[FILTER_DATE_KEY].dt.strftime(DATE_FORMAT)
+    member_df[export_membership_date_col] = member_df[config.filter_date_key].dt.strftime(DATE_FORMAT)
 
-    if KEEP_EMAILS:
-        member_df = member_df.loc[member_df["email"].isin(KEEP_EMAILS)]
+    if config.keep_emails:
+        member_df = member_df.loc[member_df["email"].isin(config.keep_emails)]
 
     # Only keeping:
     # - the latest memberships
     # - whose target date falls between the chosen start and end
     member_df = member_df.loc[
-        (member_df[FILTER_DATE_KEY].dt.date >= START_DATE)
-        & (member_df[FILTER_DATE_KEY].dt.date < END_DATE)
-        & (member_df[FILTER_DATE_KEY] == member_df[latest_membership_date_col])
+        (member_df[config.filter_date_key].dt.date >= config.start_date)
+        & (member_df[config.filter_date_key].dt.date < config.end_date)
+        & (member_df[config.filter_date_key] == member_df[latest_membership_date_col])
     ]
 
     for target_membership in member_df[["email", "nom", "prenom", export_membership_date_col]].to_dict(

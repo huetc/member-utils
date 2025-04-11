@@ -1,0 +1,13 @@
+google_auth_creds_path: "credentials.json"
+google_auth_token_path: "token.json"
+gsheet_id: "REPLACE_BY_GSHEET_ID"
+gsheet_tab_name: "REPLACE_BY_GSHEET_TAB"
+gsheet_column_mapping:
+  A: "email"
+  B: "nom"
+  C: "prenom"
+  D: "date_fin_adhesion"
+
+start_date: "2026-04-08"
+end_date: "2026-05-08"
+filter_date_key: "date_fin_adhesion"
