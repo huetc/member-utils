@@ -2,11 +2,13 @@ import pandas as pd
 from googleapiclient.discovery import build
 
 from member_utils.config import JobConfig
+from member_utils.gmail_sender import build_gmail_service, send_email
 from member_utils.google_auth import generate_creds
 from member_utils.gsheet_loader import load_df
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets.readonly",
+    "https://www.googleapis.com/auth/gmail.send",
 ]
 
 
@@ -58,8 +60,24 @@ if __name__ == "__main__":
     for target_membership in member_df[["email", "nom", "prenom", export_membership_date_col]].to_dict(
         orient="records"
     ):
-        print(f"""
-            @{target_membership["email"]}:\n
-            Hello {target_membership["prenom"]} {target_membership["nom"]}.\n
-            Your membership expires on {target_membership[export_membership_date_col]}
-        """)
+        message_body = f"""
+                @{target_membership["email"]}:\n
+                Hello {target_membership["prenom"]} {target_membership["nom"]}.\n
+                Your membership expires on {target_membership[export_membership_date_col]}
+            """
+        if config.mail_dry_run:
+            print(message_body)
+        else:
+            send_email(
+                gmail_service=build_gmail_service(
+                    creds=generate_creds(
+                        creds_path=config.google_auth_creds_path,
+                        token_path=config.google_auth_token_path,
+                        scopes=SCOPES,
+                    )
+                ),
+                subject=config.mail_subject,
+                body=message_body,
+                to_addresses=target_membership["email"],
+                bcc_addresses=config.mail_bcc_addresses,
+            )

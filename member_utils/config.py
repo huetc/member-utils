@@ -18,12 +18,16 @@ class JobConfig(BaseSettings):
     gsheet_tab_name: str = "Sheet1"
     gsheet_column_mapping: dict[str, str] | None = None
 
+    mail_subject: str = ""
+    mail_bcc_addresses: str | None = None
+
     start_date: date
     end_date: date
     filter_date_key: str
     keep_emails: list[str] | None = None
 
     local_csv_path: str | None = None
+    mail_dry_run: bool = False
 
     model_config = SettingsConfigDict(yaml_file=os.getenv("MEMBER_UTILS_CONF", "config/example.yaml"))
 
