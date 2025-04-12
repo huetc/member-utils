@@ -5,6 +5,7 @@ from member_utils.config import JobConfig
 from member_utils.gmail_sender import build_gmail_service, send_email
 from member_utils.google_auth import generate_creds
 from member_utils.gsheet_loader import load_df
+from member_utils.message_templater import get_jinja_env, render_message_template
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets.readonly",
@@ -33,17 +34,20 @@ if __name__ == "__main__":
             sheet_name=config.gsheet_tab_name,
         )
 
-    member_df[config.filter_date_key] = pd.to_datetime(member_df[config.filter_date_key], format=DATE_FORMAT)
+    member_df["date_debut_adhesion"] = pd.to_datetime(member_df["date_debut_adhesion"], format=DATE_FORMAT)
+    member_df["date_fin_adhesion"] = pd.to_datetime(member_df["date_fin_adhesion"], format=DATE_FORMAT)
 
     latest_membership_date_col = f"last_{config.filter_date_key}"
-    export_membership_date_col = f"export_{config.filter_date_key}"
+    export_membership_start_date_col = "export_date_debut_adhesion"
+    export_membership_end_date_col = "export_date_fin_adhesion"
 
     # Retrieving its most recent annual membership for each (first name, name)
     member_df[latest_membership_date_col] = member_df.groupby(["prenom", "nom"])[config.filter_date_key].transform(
         "max"
     )
 
-    member_df[export_membership_date_col] = member_df[config.filter_date_key].dt.strftime(DATE_FORMAT)
+    member_df[export_membership_start_date_col] = member_df["date_debut_adhesion"].dt.strftime(DATE_FORMAT)
+    member_df[export_membership_end_date_col] = member_df["date_fin_adhesion"].dt.strftime(DATE_FORMAT)
 
     if config.keep_emails:
         member_df = member_df.loc[member_df["email"].isin(config.keep_emails)]
@@ -57,14 +61,22 @@ if __name__ == "__main__":
         & (member_df[config.filter_date_key] == member_df[latest_membership_date_col])
     ]
 
-    for target_membership in member_df[["email", "nom", "prenom", export_membership_date_col]].to_dict(
-        orient="records"
-    ):
-        message_body = f"""
-                @{target_membership["email"]}:\n
-                Hello {target_membership["prenom"]} {target_membership["nom"]}.\n
-                Your membership expires on {target_membership[export_membership_date_col]}
-            """
+    jinja_env = get_jinja_env(config.message_template_directory)
+
+    for target_membership in member_df[
+        ["email", "nom", "prenom", export_membership_start_date_col, export_membership_end_date_col]
+    ].to_dict(orient="records"):
+        message_body = render_message_template(
+            jinja_env=jinja_env,
+            template_file=config.message_template_file,
+            render_variables={
+                **target_membership,
+                **{
+                    "date_debut": target_membership[export_membership_start_date_col],
+                    "date_fin": target_membership[export_membership_end_date_col],
+                },
+            },
+        )
         if config.mail_dry_run:
             print(message_body)
         else:

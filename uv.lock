@@ -361,6 +361,7 @@ dependencies = [
     { name = "google-api-python-client" },
     { name = "google-auth-httplib2" },
     { name = "google-auth-oauthlib" },
+    { name = "jinja2" },
     { name = "pandas" },
     { name = "pydantic-settings" },
 ]
@@ -382,6 +383,7 @@ requires-dist = [
     { name = "google-api-python-client", specifier = ">=2.166.0" },
     { name = "google-auth-httplib2", specifier = ">=0.2.0" },
     { name = "google-auth-oauthlib", specifier = ">=1.2.1" },
+    { name = "jinja2", specifier = ">=3.1.6" },
     { name = "pandas", specifier = ">=2.2.3" },
     { name = "pydantic-settings", specifier = ">=2.8.1" },
 ]

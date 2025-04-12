@@ -29,6 +29,9 @@ class JobConfig(BaseSettings):
     local_csv_path: str | None = None
     mail_dry_run: bool = False
 
+    message_template_directory: str = "templates"
+    message_template_file: str = "base.txt.jinja"
+
     model_config = SettingsConfigDict(yaml_file=os.getenv("MEMBER_UTILS_CONF", "config/example.yaml"))
 
     @classmethod
