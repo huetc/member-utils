@@ -13,8 +13,6 @@ SCOPES = [
 ]
 
 
-DATE_FORMAT = "%d/%m/%Y"
-
 if __name__ == "__main__":
     config = JobConfig()
 
@@ -34,8 +32,8 @@ if __name__ == "__main__":
             sheet_name=config.gsheet_tab_name,
         )
 
-    member_df["date_debut_adhesion"] = pd.to_datetime(member_df["date_debut_adhesion"], format=DATE_FORMAT)
-    member_df["date_fin_adhesion"] = pd.to_datetime(member_df["date_fin_adhesion"], format=DATE_FORMAT)
+    member_df["date_debut_adhesion"] = pd.to_datetime(member_df["date_debut_adhesion"], format=config.date_format)
+    member_df["date_fin_adhesion"] = pd.to_datetime(member_df["date_fin_adhesion"], format=config.date_format)
 
     latest_membership_date_col = f"last_{config.filter_date_key}"
     export_membership_start_date_col = "export_date_debut_adhesion"
@@ -46,8 +44,8 @@ if __name__ == "__main__":
         "max"
     )
 
-    member_df[export_membership_start_date_col] = member_df["date_debut_adhesion"].dt.strftime(DATE_FORMAT)
-    member_df[export_membership_end_date_col] = member_df["date_fin_adhesion"].dt.strftime(DATE_FORMAT)
+    member_df[export_membership_start_date_col] = member_df["date_debut_adhesion"].dt.strftime(config.date_format)
+    member_df[export_membership_end_date_col] = member_df["date_fin_adhesion"].dt.strftime(config.date_format)
 
     if config.keep_emails:
         member_df = member_df.loc[member_df["email"].isin(config.keep_emails)]
