@@ -1,6 +1,6 @@
 import base64
 import logging
-from email.mime.text import MIMEText
+from email.message import EmailMessage
 
 from google.auth.external_account_authorized_user import Credentials as ExternalCredentials
 from google.oauth2.credentials import Credentials
@@ -41,15 +41,18 @@ def send_email(
     :param bcc_addresses: a comma-separated list of the recipients' email
         addresses who will receive the e-mail as "bcc"
     """
-    message = MIMEText(body)
-    message["subject"] = subject
+    message = EmailMessage()
+    message["Subject"] = subject
 
     if to_addresses:
-        message["to"] = to_addresses
+        message["To"] = to_addresses
     if cc_addresses:
-        message["cc"] = cc_addresses
+        message["Cc"] = cc_addresses
     if bcc_addresses:
-        message["bcc"] = bcc_addresses
+        message["Bcc"] = bcc_addresses
+
+    message.add_header("Content-Type", "text/html")
+    message.set_payload(body)
 
     email = (
         gmail_service.users()
