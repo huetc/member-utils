@@ -21,7 +21,8 @@ class JobConfig(BaseSettings):
     mail_subject: str = ""
     mail_bcc_addresses: str | None = None
 
-    date_format: str = "%d/%m/%Y"
+    source_date_format: str = "%Y-%m-%d"
+    export_date_format: str = "%Y-%m-%d"
     start_date: date
     end_date: date
     filter_date_key: str
