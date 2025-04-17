@@ -1,3 +1,5 @@
+import unicodedata
+
 import pandas as pd
 from googleapiclient.discovery import build
 
@@ -32,6 +34,38 @@ if __name__ == "__main__":
             sheet_name=config.gsheet_tab_name,
         )
 
+    # Name and first name standardisation:
+    # - replace specific characters (e.g. accents)
+    # - replace "-" with white spaces
+    # - write in lower/upper case
+    member_df["nom_standard"] = (
+        member_df["nom"]
+        .apply(
+            lambda name: "".join([
+                character for character in unicodedata.normalize("NFKD", name) if not unicodedata.combining(character)
+            ])
+            if name
+            else None
+        )
+        .replace("-", " ", regex=True)
+        .str.upper()
+    )
+
+    member_df["prenom_standard"] = (
+        member_df["prenom"]
+        .apply(
+            lambda first_name: "".join([
+                character
+                for character in unicodedata.normalize("NFKD", first_name)
+                if not unicodedata.combining(character)
+            ])
+            if first_name
+            else None
+        )
+        .replace("-", " ", regex=True)
+        .str.upper()
+    )
+
     member_df["date_debut_adhesion"] = pd.to_datetime(member_df["date_debut_adhesion"], format=config.date_format)
     member_df["date_fin_adhesion"] = pd.to_datetime(member_df["date_fin_adhesion"], format=config.date_format)
 
@@ -39,10 +73,12 @@ if __name__ == "__main__":
     export_membership_start_date_col = "export_date_debut_adhesion"
     export_membership_end_date_col = "export_date_fin_adhesion"
 
-    # Retrieving its most recent annual membership for each (first name, name)
-    member_df[latest_membership_date_col] = member_df.groupby(["prenom", "nom"])[config.filter_date_key].transform(
-        "max"
-    )
+    # Retrieving its most recent annual membership for each (standard first name, standard name)
+    # Standardisation is useful to catch cases where accents or "-" would otherwise cause membership to be attached to
+    # two different persons instead of one
+    member_df[latest_membership_date_col] = member_df.groupby(["prenom_standard", "nom_standard"])[
+        config.filter_date_key
+    ].transform("max")
 
     member_df[export_membership_start_date_col] = member_df["date_debut_adhesion"].dt.strftime(config.date_format)
     member_df[export_membership_end_date_col] = member_df["date_fin_adhesion"].dt.strftime(config.date_format)
